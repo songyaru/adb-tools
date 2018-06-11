@@ -7,7 +7,7 @@ const readline = require('readline');
 const chooseClientByUserChoice = async (devices) => {
     const rl = readline.createInterface(process.stdin, process.stdout);
 
-    let info = "";
+    let info = '';
     devices.forEach((d, index) => {
         info += '[' + index + '] : ' + d.id + ' ';
     });
@@ -27,7 +27,7 @@ const chooseClientByUserChoice = async (devices) => {
 const getDeviceId = async () => {
     let id;
     let devicesIndex = -1;
-    let client = "";
+    let client = '';
     try {
         const chooseClient = async () => {
             if (!(client && 'device' === client.type.toLowerCase())) {
@@ -50,7 +50,6 @@ const getDeviceId = async () => {
                     new Error('no android devices found');
                 }
                 client = devices[devicesIndex];
-                console.log("", '   client-- ', client);
                 if (client.type.toLowerCase() !== 'device') {
                     // todo 没有授权
                     // await chooseClient();

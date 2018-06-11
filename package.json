@@ -1,6 +1,6 @@
 {
   "name": "adb-tools",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "adb tools for remote debugging",
   "main": "index.js",
   "scripts": {},
@@ -11,8 +11,6 @@
   "license": "MIT",
   "dependencies": {
     "adbkit": "^2.11.0",
-    "bluebird": "^3.5.1",
-    "curlrequest": "^1.0.1",
     "request": "^2.85.0",
     "request-promise": "^4.2.2"
   },
