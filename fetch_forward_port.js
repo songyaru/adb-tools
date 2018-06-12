@@ -15,7 +15,7 @@ const fetchForwardPortJson = (port) => {
                 }
             }
 
-            return reject(port + ' 端口没有返回数据');
+            return reject('http://localhost:' + port + '/json 没有返回有效的数据');
 
         }).catch((error) => {
             reject(error);

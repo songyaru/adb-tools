@@ -74,7 +74,7 @@ const getDeviceId = async () => {
 const getForwardPortInfo = async (id, ports, forwardPort) => {
     let len = ports.length;
     if (len < 1) {
-        throw new Error('没有找到小程序启动的 webview');
+        throw new Error('小程序没有启动');
     }
     for (let i = 0; i < len; i++) {
         let port = ports[i];

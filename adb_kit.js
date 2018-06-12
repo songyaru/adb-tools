@@ -3,9 +3,8 @@ let adbClient;
 
 const adbKit = require('adbkit');
 const path = require('path');
-const utils = require('./utils');
 const adbPath = (() => {
-    if (utils.isMac) {
+    if (process.platform === 'darwin') {
         return path.join(__dirname, './bin/adb-macos/adb');
     } else {
         return path.join(__dirname, './bin/adb-win/adb.exe');
