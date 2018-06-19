@@ -2,6 +2,7 @@ const adb = require('adbkit');
 const adbKit = require('./adb_kit');
 const fetchForwardPort = require('./fetch_forward_port');
 const readline = require('readline');
+const path = require('path');
 
 
 const chooseClientByUserChoice = async (devices) => {
@@ -24,7 +25,7 @@ const chooseClientByUserChoice = async (devices) => {
     })
 };
 
-const getDeviceId = async () => {
+let getDeviceId = async () => {
     let id;
     let devicesIndex = -1;
     let client = '';
@@ -70,7 +71,17 @@ const getDeviceId = async () => {
     return id;
 };
 
-
+let _deviceId = null;
+const setDeviceId = (id) => {
+    if (id) {
+        _deviceId = id;
+        getDeviceId = () => {
+            return new Promise((resolve, reject) => {
+                resolve(id);
+            });
+        }
+    }
+};
 const getForwardPortInfo = async (id, ports, forwardPort) => {
     let len = ports.length;
     if (len < 1) {
@@ -121,7 +132,14 @@ const reversePort = (remote, local) => {
     });
 };
 
-module.exports = {adbWebViewInfo, fetchForwardPort, reversePort, adbKit};
+module.exports = {
+    adbWebViewInfo,
+    fetchForwardPort,
+    reversePort,
+    adbKit,
+    setDeviceId,
+    'adbPath': path.resolve(__dirname, './bin/' + (process.platform === 'darwin' ? 'adb-macos' : 'adb-win'))
+};
 
 
 
