@@ -1,8 +1,8 @@
 const rp = require('request-promise');
 
-const fetchForwardPortJson = (port) => {
+const fetchForwardPort = ({url = 'localhost', port = 4000} = {}) => {
     return new Promise((resolve, reject) => {
-        return rp('http://localhost:' + port + '/json').then(data => {
+        return rp('http://' + url + ':' + port + '/json').then(data => {
             let json = JSON.parse(data);
             if (json) {
                 let result = json.filter(currentInfo => {
@@ -15,7 +15,7 @@ const fetchForwardPortJson = (port) => {
                 }
             }
 
-            return reject('http://localhost:' + port + '/json 没有返回有效的数据');
+            return reject('http://' + url + ':' + port + '/json 没有返回有效的数据');
 
         }).catch((error) => {
             reject(error);
@@ -24,4 +24,4 @@ const fetchForwardPortJson = (port) => {
 };
 
 
-module.exports = fetchForwardPortJson;
+module.exports = fetchForwardPort;

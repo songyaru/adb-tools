@@ -51,7 +51,7 @@ let getDeviceId = async () => {
                     new Error('no android devices found');
                 }
                 client = devices[devicesIndex];
-                if (client.type.toLowerCase() !== 'device') {
+                if (client && client.type.toLowerCase() !== 'device') {
                     // todo 没有授权
                     // await chooseClient();
                     throw new Error('设备没有授权')
@@ -90,16 +90,15 @@ const getForwardPortInfo = async (id, ports, forwardPort) => {
     for (let i = 0; i < len; i++) {
         let port = ports[i];
         let info = await adbKit.forward(id, 'tcp:' + forwardPort, 'localabstract:' + port)
-            .then(() => fetchForwardPort(forwardPort).then(data => data, _ => false));
+            .then(() => fetchForwardPort({forwardPort}).then(data => data, _ => false));
         if (info) {
             return info;
         }
     }
 };
 
-const adbWebViewInfo = ({forwardPort, prefix}) => {
-    forwardPort = forwardPort || '4000';
-    prefix = prefix || 'zeus_webview';
+const adbWebViewInfo = ({forwardPort = 4000, prefix = 'zeus_webview', url = 'localhost'} = {}) => {
+
     let re = new RegExp('@(' + prefix + '_devtools_remote_(?:\\d+))', 'gi');
 
     return new Promise((resolve, reject) => {
