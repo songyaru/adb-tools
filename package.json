@@ -1,6 +1,6 @@
 {
   "name": "adb-tools",
-  "version": "1.0.7",
+  "version": "1.0.10",
   "description": "adb tools for remote debugging",
   "main": "index.js",
   "scripts": {},

@@ -23,7 +23,7 @@ const listDevices = function () {
     return new Promise((resolve, reject) => {
         getClient().listDevices().then((devices) => {
             resolve(devices);
-        }).catch((error) => {
+        }).catch(error => {
             reject(error);
         })
     })

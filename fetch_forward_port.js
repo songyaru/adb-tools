@@ -1,17 +1,13 @@
 const rp = require('request-promise');
 
-const fetchForwardPort = ({url = 'localhost', port = 4000} = {}) => {
+const fetchForwardPort = ({url = 'localhost', port = 4000, filter = data => data} = {}) => {
     return new Promise((resolve, reject) => {
         return rp('http://' + url + ':' + port + '/json').then(data => {
-            let json = JSON.parse(data);
-            if (json) {
-                let result = json.filter(currentInfo => {
-                    let description = JSON.parse(currentInfo['description'] || '""');
-                    let isAttached = description['attached'];
-                    return !!isAttached;
-                });
-                if (result.length) {
-                    return resolve({json: json, port: port});
+            let result = JSON.parse(data);
+            if (result) {
+                let json = filter(result);
+                if (json.length) {
+                    return resolve({json, port});
                 }
             }
 

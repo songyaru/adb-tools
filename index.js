@@ -82,22 +82,26 @@ const setDeviceId = (id) => {
         }
     }
 };
-const getForwardPortInfo = async (id, ports, forwardPort) => {
+
+const getForwardPortInfo = async (deviceId, ports, forwardPort, filter = d => d) => {
     let len = ports.length;
     if (len < 1) {
         throw new Error('小程序没有启动');
     }
     for (let i = 0; i < len; i++) {
         let port = ports[i];
-        let info = await adbKit.forward(id, 'tcp:' + forwardPort, 'localabstract:' + port)
-            .then(() => fetchForwardPort({forwardPort}).then(data => data, _ => false));
+        let info = await adbKit.forward(deviceId, 'tcp:' + forwardPort, 'localabstract:' + port)
+            .then(() => fetchForwardPort({
+                port: forwardPort,
+                filter
+            }).then(data => data, _ => false));
         if (info) {
             return info;
         }
     }
 };
 
-const adbWebViewInfo = ({forwardPort = 4000, prefix = 'zeus_webview', url = 'localhost'} = {}) => {
+const adbWebViewInfo = ({forwardPort = 4000, prefix = 'webview', filter = d => d} = {}) => {
 
     let re = new RegExp('@(' + prefix + '_devtools_remote_(?:\\d+))', 'gi');
 
@@ -112,7 +116,7 @@ const adbWebViewInfo = ({forwardPort = 4000, prefix = 'zeus_webview', url = 'loc
                     });
                     return remotePorts;
                 })
-                .then(remotePorts => getForwardPortInfo(deviceId, [...remotePorts], forwardPort))
+                .then(remotePorts => getForwardPortInfo(deviceId, [...remotePorts], forwardPort, filter))
                 .then(info => resolve(info))
                 .catch(e => reject(e));
         });
