@@ -1,6 +1,6 @@
 {
   "name": "adb-tools",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "adb tools for remote debugging",
   "main": "index.js",
   "scripts": {},
@@ -9,6 +9,10 @@
   ],
   "author": "songyaru",
   "license": "MIT",
+  "repository": {
+      "type": "git",
+      "url": "git+https://github.com/songyaru/adb-tools.git"
+    },
   "dependencies": {
     "adbkit": "^2.11.0",
     "request": "^2.85.0",
