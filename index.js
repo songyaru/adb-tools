@@ -2,18 +2,18 @@ const adb = require('adbkit');
 const adbKit = require('./adb_kit');
 const fetchForwardPort = require('./fetch_forward_port');
 const readline = require('readline');
-const path = require('path');
+const getPort = require('get-port');
 
 
 const chooseClientByUserChoice = async (devices) => {
     const rl = readline.createInterface(process.stdin, process.stdout);
 
     let info = '';
-    devices.forEach((d, index) => {
-        info += '[' + index + '] : ' + d.id + ' ';
+    devices.forEach((device, index) => {
+        info += '[' + index + '] : ' + device.id + ' ';
     });
     return new Promise((resolve, reject) => {
-        rl.question('请选择连接的设备  ' + info, function (answer) {
+        rl.question('请选择连接的设备  ' + info, answer => {
             answer = answer | 0;
             if (answer > -1 && answer < devices.length) {
                 resolve(answer);
@@ -26,100 +26,114 @@ const chooseClientByUserChoice = async (devices) => {
 };
 
 let getDeviceId = async () => {
-    let id;
     let devicesIndex = -1;
-    let client = '';
-    try {
-        const chooseClient = async () => {
-            if (!(client && 'device' === client.type.toLowerCase())) {
-                const devices = await adbKit.listDevices();
-                if (devices.length == 1) {
-                    devicesIndex = 0
-                } else if (devices.length > 1) {
-                    if (client) {
-                        devicesIndex = devices.findIndex((device) => device.id === client.id)
-                    } else {
-                        // 选择第 N 个设备
-                        await chooseClientByUserChoice(devices).then((index) => {
-                            devicesIndex = index;
-                        });
-                    }
-                    if (devicesIndex < 0) {
-                        throw new Error('choose android function not set');
-                    }
+    let client;
+    const chooseClient = async () => {
+        if (!(client && 'device' === client.type.toLowerCase())) {
+            const devices = await adbKit.listDevices();
+            if (devices.length == 1) {
+                devicesIndex = 0
+            } else if (devices.length > 1) {
+                if (client) {
+                    devicesIndex = devices.findIndex(device => device.id === client.id)
                 } else {
-                    new Error('no android devices found');
+                    // 选择第 N 个设备
+                    await chooseClientByUserChoice(devices).then(index => {
+                        devicesIndex = index;
+                    });
                 }
-                client = devices[devicesIndex];
-                if (client && client.type.toLowerCase() !== 'device') {
-                    // todo 没有授权
-                    // await chooseClient();
-                    throw new Error('设备没有授权')
+                if (devicesIndex < 0) {
+                    throw new Error('没有选中设备');
                 }
+            } else {
+                throw new Error('没有找到设备');
             }
-        };
+            client = devices[devicesIndex];
+            if (client && client.type.toLowerCase() !== 'device') {
+                // todo 没有授权
+                // await chooseClient();
+                throw new Error('设备没有授权');
+            }
+        }
+
+    };
+
+    try {
         await chooseClient();
         if (client) {
-            id = client.id;
+            return client.id;
         } else {
-            throw new Error('no valid android device')
+            throw new Error('设备不可调试')
         }
-    } catch (error) {
-        throw error;
+    } catch (e) {
+        throw e;
     }
 
-    return id;
 };
 
 let _deviceId = null;
+let oriGetDeviceId = getDeviceId;
 const setDeviceId = (id) => {
     if (id) {
         _deviceId = id;
         getDeviceId = () => {
-            return new Promise((resolve, reject) => {
-                resolve(id);
+            return new Promise(resolve => {
+                if (_deviceId) {
+                    resolve(_deviceId);
+                }
             });
         }
+    } else {
+        // 恢复
+        _deviceId = null;
+        getDeviceId = oriGetDeviceId;
     }
 };
 
-const getForwardPortInfo = async (deviceId, ports, forwardPort, filter = d => d) => {
+const getForwardPortInfo = async ({deviceId, ports, tcpPort, filter = d => d} = {}) => {
     let len = ports.length;
-    if (len < 1) {
-        throw new Error('小程序没有启动');
-    }
+    let port = await getPort({port: tcpPort});
+    let allInfo = [];
     for (let i = 0; i < len; i++) {
-        let port = ports[i];
-        let info = await adbKit.forward(deviceId, 'tcp:' + forwardPort, 'localabstract:' + port)
-            .then(() => fetchForwardPort({
-                port: forwardPort,
-                filter
-            }).then(data => data, _ => false));
+        let localPort = ports[i];
+        let info = await adbKit.forward(deviceId, 'tcp:' + port, 'localabstract:' + localPort)
+            .then(() => fetchForwardPort({port, filter}))
+            .catch(_ => false);
         if (info) {
-            return info;
+            if (i < len - 1) {
+                port = await getPort({port: ++tcpPort});
+            }
+            info.localPort = localPort;
+            allInfo.push(info);
         }
     }
+
+    if (allInfo.length) {
+        return allInfo;
+    } else {
+        throw new Error('没有找到有效的 webview 远程调试信息');
+    }
 };
 
-const adbWebViewInfo = ({forwardPort = 4000, prefix = 'webview', filter = d => d} = {}) => {
+const webviewInfo = ({tcpPort = 4000, prefix = 'webview', filter = d => d} = {}) => {
 
-    let re = new RegExp('@(' + prefix + '_devtools_remote_(?:\\d+))', 'gi');
+    let re = new RegExp('@(' + prefix + '_devtools_remote(?:_\\d+)?)', 'gi');
 
-    return new Promise((resolve, reject) => {
-        getDeviceId().then(function (deviceId) {
-            adbKit.shell(deviceId, 'cat /proc/net/unix | grep --text  _devtools_remote')
-                .then(adb.util.readAll)
-                .then(output => {
-                    let remotePorts = new Set();
-                    output.toString().replace(re, (_, port) => {
-                        remotePorts.add(port);
-                    });
-                    return remotePorts;
-                })
-                .then(remotePorts => getForwardPortInfo(deviceId, [...remotePorts], forwardPort, filter))
-                .then(info => resolve(info))
-                .catch(e => reject(e));
-        });
+    return getDeviceId().then(deviceId => {
+        return adbKit.shell(deviceId, 'cat /proc/net/unix | grep --text  _devtools_remote')
+            .then(adb.util.readAll)
+            .then(output => {
+                let remotePorts = new Set();
+                output.toString().replace(re, (_, port) => {
+                    remotePorts.add(port);
+                });
+                if (remotePorts.size) {
+                    return [...remotePorts];
+                } else {
+                    throw new Error('没有启动 webview');
+                }
+            })
+            .then(ports => getForwardPortInfo({deviceId, ports, tcpPort, filter}))
     });
 
 };
@@ -127,21 +141,20 @@ const adbWebViewInfo = ({forwardPort = 4000, prefix = 'webview', filter = d => d
 
 const reversePort = (remote, local) => {
     return new Promise((resolve, reject) => {
-        getDeviceId().then(function (deviceId) {
-            adbKit.reverse(deviceId, 'tcp:' + remote, 'tcp:' + local)
-                .then(info => resolve(info))
-                .catch(e => reject(e));
-        });
+        return getDeviceId()
+            .then(deviceId => adbKit.reverse(deviceId, 'tcp:' + remote, 'tcp:' + local))
+            .catch(e => reject(e));
     });
 };
 
+
 module.exports = {
-    adbWebViewInfo,
+    adbWebViewInfo: webviewInfo, //todo 废弃接口删除
+    webviewInfo,
     fetchForwardPort,
     reversePort,
     adbKit,
-    setDeviceId,
-    'adbPath': path.resolve(__dirname, './bin/' + (process.platform === 'darwin' ? 'adb-macos' : 'adb-win'))
+    setDeviceId
 };
 
 

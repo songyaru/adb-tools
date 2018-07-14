@@ -21,7 +21,7 @@ const getClient = function () {
 
 const listDevices = function () {
     return new Promise((resolve, reject) => {
-        getClient().listDevices().then((devices) => {
+        getClient().listDevices().then(devices => {
             resolve(devices);
         }).catch(error => {
             reject(error);
@@ -31,9 +31,9 @@ const listDevices = function () {
 
 const reverse = function (serial, remote, local) {
     return new Promise((resolve, reject) => {
-        getClient().reverse(serial, remote, local).then((result) => {
+        getClient().reverse(serial, remote, local).then(result => {
             resolve(result);
-        }).catch((error) => {
+        }).catch(error => {
             reject(error);
         })
     })
@@ -41,9 +41,9 @@ const reverse = function (serial, remote, local) {
 
 const version = function () {
     return new Promise((resolve, reject) => {
-        getClient().version().then((result) => {
+        getClient().version().then(result => {
             resolve(result);
-        }).catch((error) => {
+        }).catch(error => {
             reject(error);
         })
     })
@@ -52,10 +52,10 @@ const version = function () {
 const kill = function () {
     return new Promise((resolve, reject) => {
         if (adbClient) {
-            getClient().kill().then((result) => {
+            getClient().kill().then(result => {
                 adbClient = null;
                 resolve(result);
-            }).catch((error) => {
+            }).catch(error => {
                 reject(error);
             })
         } else {
@@ -67,9 +67,9 @@ const kill = function () {
 
 const shell = function (serial, command) {
     return new Promise((resolve, reject) => {
-        getClient().shell(serial, command).then((result) => {
+        getClient().shell(serial, command).then(result => {
             resolve(result);
-        }).catch((error) => {
+        }).catch(error => {
             reject(error);
         })
     })
@@ -80,9 +80,9 @@ const shell = function (serial, command) {
 
 const forward = function (serial, local, remote) {
     return new Promise((resolve, reject) => {
-        getClient().forward(serial, local, remote).then((result) => {
+        getClient().forward(serial, local, remote).then(result => {
             resolve(result);
-        }).catch((error) => {
+        }).catch(error => {
             reject(error);
         })
     })

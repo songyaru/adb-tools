@@ -6,14 +6,14 @@ const fetchForwardPort = ({url = 'localhost', port = 4000, filter = data => data
             let result = JSON.parse(data);
             if (result) {
                 let json = filter(result);
-                if (json.length) {
+                if (json && json.length) {
                     return resolve({json, port});
                 }
             }
 
-            return reject('http://' + url + ':' + port + '/json 没有返回有效的数据');
+            reject('http://' + url + ':' + port + '/json 没有返回有效的数据');
 
-        }).catch((error) => {
+        }).catch(error => {
             reject(error);
         });
     });
