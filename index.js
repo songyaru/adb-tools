@@ -117,12 +117,10 @@ const getForwardPortInfo = async ({deviceId, ports, tcpPort, filter = d => d} = 
 
 const webviewInfo = ({tcpPort = 4000, prefix = 'webview', filter = d => d} = {}) => {
 
-    let re;
     if (prefix === '*') {
-        re = new RegExp('@(.+_devtools_remote(?:_\\d+)?)', 'gi');
-    } else {
-        re = new RegExp('@(' + prefix + '_devtools_remote(?:_\\d+)?)', 'gi');
+        prefix = '.+';
     }
+    let re = new RegExp('@(' + prefix + '_devtools_remote(?:_\\d+)?)', 'gi');
 
     return getDeviceId().then(deviceId => {
         return adbKit.shell(deviceId, 'cat /proc/net/unix | grep --text  _devtools_remote')
