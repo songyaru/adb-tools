@@ -13,7 +13,7 @@ const chooseClientByUserChoice = async (devices) => {
         info += '[' + index + '] : ' + device.id + ' ';
     });
     return new Promise((resolve, reject) => {
-        rl.question('请选择连接的设备  ' + info, answer => {
+        rl.question('请选择连接的 android 设备  ' + info, answer => {
             answer = answer | 0;
             if (answer > -1 && answer < devices.length) {
                 resolve(answer);
@@ -43,16 +43,16 @@ let getDeviceId = async () => {
                     });
                 }
                 if (devicesIndex < 0) {
-                    throw new Error('没有选中设备');
+                    throw new Error('没有选中 android 设备');
                 }
             } else {
-                throw new Error('没有找到设备');
+                throw new Error('没有找到 android 设备');
             }
             client = devices[devicesIndex];
             if (client && client.type.toLowerCase() !== 'device') {
                 // todo 没有授权
                 // await chooseClient();
-                throw new Error('设备没有授权');
+                throw new Error('android 设备没有授权');
             }
         }
 
@@ -63,7 +63,7 @@ let getDeviceId = async () => {
         if (client) {
             return client.id;
         } else {
-            throw new Error('设备不可调试')
+            throw new Error('android 设备不可调试')
         }
     } catch (e) {
         throw e;
